@@ -1,0 +1,76 @@
+clear all;
+
+T=xlsread('C:\Users\acer-pc\Desktop\major project 2\MEI PLOTS\jumpingjack\radon-mei\Book4.xlsx'); 
+%    C=[ 1;1;1;1;2;2;2;2;2;3;3;3;3;3;4;4;4;4;4;5;5;5;5;5;6;6;6;6;6;7;7;7;7;7;8;8;8;8;8] ;
+%    C=[ 1;1;1;1;1;2;2;2;2;3;3;3;3;3;4;4;4;4;4;5;5;5;5;5;6;6;6;6;6;7;7;7;7;7;8;8;8;8;8] ;
+%  C=[ 1;1;1;1;1;2;2;2;2;2;3;3;3;3;4;4;4;4;4;5;5;5;5;5;6;6;6;6;6;7;7;7;7;7;8;8;8;8;8] ;
+%  C=[ 1;1;1;1;1;2;2;2;2;2;3;3;3;3;3;4;4;4;4;5;5;5;5;5;6;6;6;6;6;7;7;7;7;7;8;8;8;8;8] ;
+%   C=[ 1;1;1;1;1;2;2;2;2;2;3;3;3;3;3;4;4;4;4;4;5;5;5;5;6;6;6;6;6;7;7;7;7;7;8;8;8;8;8] ;
+%  C=[ 1;1;1;1;1;2;2;2;2;2;3;3;3;3;3;4;4;4;4;4;5;5;5;5;5;6;6;6;6;7;7;7;7;7;8;8;8;8;8] ;
+C=[ 1;1;1;1;1;2;2;2;2;2;3;3;3;3;3;4;4;4;4;4;5;5;5;5;5;6;6;6;6;6;7;7;7;7;8;8;8;8;8] ;
+% C=[ 1;1;1;1;1;2;2;2;2;2;3;3;3;3;3;4;4;4;4;4;5;5;5;5;5;6;6;6;6;6;7;7;7;7;7;8;8;8;8] ;
+test=xlsread('C:\Users\acer-pc\Desktop\major project 2\MEI PLOTS\jumpingjack\radon-mei\testlena.xlsx'); 
+% test=[3 4 6 7;2 4 7 8]; 
+TestSet=test;
+TrainingSet=T;
+GroupTrain=C;
+u=unique(GroupTrain);
+numClasses=length(u);
+result = zeros(length(TestSet(:,1)),1);
+%build models
+for k=1:numClasses%where 1 is the current class and 0 is all other classes
+    G1=(GroupTrain==u(k));% it gives the output of equality expression
+      models(k) = svmtrain(TrainingSet,G1);
+end
+%classify test cases
+crclass=zeros(3);
+for j=1:size(TestSet,1)% upto rows of test set
+    for k=1:numClasses
+%         class = knnclassify(TestSet(j,:),TrainingSet, vv);
+            if(svmclassify(models(k),TestSet(j,:))); 
+             break;
+            end  
+% newclass(k)=(svmclassify(models(k),TestSet(j,:)));
+    end
+     result(j) = k% to which class it belongs
+    if k==1
+        ch=1; 
+    elseif  k==2
+        ch=2;
+    elseif k==3
+        ch=3;
+    elseif k==4
+        ch=4;
+    elseif k==5
+        ch=5;
+    else
+        ch=6;
+    end
+    crclass(j,k)=k;
+%     ch=ch+1;
+end
+% knowngroups=[1  2 2 3 3 4 5 5 6 6];
+% predicted=result';
+% [C,order] = confusionmat(knowngroups,predicted);
+% disp(C);
+
+disp(crclass)  
+ac=trace(crclass)/10; % divide by no. of testing videos 
+disp(strcat('ACCURACY OBTAINED    :' ,num2str(ac),'%'));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

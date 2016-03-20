@@ -1,0 +1,61 @@
+% function [result] = multisvm(TrainingSet,GroupTrain,TestSet)
+
+T=xlsread('C:\Users\acer-pc\Desktop\major project 2\training vectors2.xlsx'); 
+[numbers dates] =xlsread('C:\Users\acer-pc\Desktop\major project 2\name.xlsx'); 
+% T=[1 2 3 4;2 3 4 5;3 4 5 6;4 5 6 7] ;
+ C=[ 1;1;1;1;1;2;2;2;2;2;3] ;
+test=xlsread('C:\Users\acer-pc\Desktop\major project 2\sample4.xlsx'); 
+% test=[3 4 6 7;2 4 7 8]; 
+TestSet=test;
+TrainingSet=T;
+GroupTrain=C;
+u=unique(GroupTrain);
+numClasses=length(u);
+result = zeros(length(TestSet(:,1)),1);
+
+%build models
+for k=1:numClasses
+    %Vectorized statement that binarizes Group
+    %where 1 is the current class and 0 is all other classes
+    G1=(GroupTrain==u(k));% it gives the output of equality expression
+    models(k) = svmtrain(TrainingSet,G1);
+end
+
+%classify test cases
+crclass=zeros(3);
+for j=1:size(TestSet,1)% upto rows of test set
+    for k=1:numClasses
+        if(svmclassify(models(k),TestSet(j,:))) 
+            break;
+        end
+    end
+    result(j) = k% to which class it belongs
+    if k==1
+        ch=1; 
+    elseif  k==2
+        ch=2;
+    else
+        ch=3;
+    end
+    crclass(ch,k)=crclass(ch,k)+1;
+end
+disp(crclass)  
+ac=trace(crclass)/4; % divide by no. of testing videos 
+disp(strcat('ACCURACY OBTAINED    :' ,num2str(ac),'%'));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

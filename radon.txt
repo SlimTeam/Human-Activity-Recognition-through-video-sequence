@@ -1,0 +1,220 @@
+readerobj = VideoReader('moshe_jump.avi', 'tag', 'myreader1');
+vidFrames = read(readerobj);
+numFrames = get(readerobj, 'numberOfFrames');
+ii=0; w=0; r=1; m=1; n=1; clc;
+iter=1;
+sum=0;
+outputFolder = 'C:\Users\acer-pc\Desktop\a\denis_jack\New folder\Movie Frames from 2';  % Change this!
+bg=imread('41.jpg');
+for i=5:1:35
+    %20:10:169
+mov(i).cdata = vidFrames(:,:,:,i);
+%figure,imshow(mov(i).cdata);
+obj_b=bg-mov(i).cdata;
+fr_bw = rgb2gray(obj_b);
+%figure,imshow(obj_b);
+% title('frame difference');
+obj_b=rgb2gray(obj_b);  
+% figure,imshow(obj_b);
+%    obj_b=imadjust(obj_b);
+%   figure,imshow(obj_b);
+obj_b = medfilt2(obj_b,[2 2]);
+% obj_b = medfilt2(obj_b,[2 2]);
+% figure,imshow(obj_b);
+%level = graythresh(obj_b);
+level=.18;
+obj_b=im2bw(obj_b,level);
+ obj_b = medfilt2(obj_b,[2 2]);
+%  figure,imshow(obj_b);
+ obj_b = bwareaopen(obj_b, 400); 
+% obj_b = medfilt2(obj_b,[2 2]);
+%  figure,imshow(obj_b);
+% se = strel('disk',2);
+% obj_b = imclose(obj_b,se);
+ obj_b = imfill(obj_b,'holes');
+%   figure,imshow(obj_b);
+%   obj_b = bwareaopen(obj_b, 50); 
+%    figure,imshow(obj_b);
+labeledImage = bwconncomp(obj_b,8);
+data = regionprops(labeledImage,'basic');
+ba = data.Area; 
+Dis=0;
+% diff=uint32(obj_b);
+% Dis=uint32(Dis);
+% for i=1:size(diff,1)
+% for j=1:size(diff,2)
+% Dis=Dis+(diff(i,j));
+% end
+% end
+Dis=abs(ba);
+%Dt(iter)=(Dis);
+sum=sum+Dis;
+iter=iter+1;
+
+end
+    
+mu_d=sum/iter;
+mu_d=1.12*mu_d;
+mu_d=uint32(mu_d);
+
+bg1=imread('41.jpg');
+ for ii=5:1:35
+     %20:10:169
+mov(ii).cdata = vidFrames(:,:,:,ii);
+%figure,imshow(mov(i).cdata);
+obj_b=bg-mov(ii).cdata;
+fr_bw = rgb2gray(obj_b);
+%figure,imshow(obj_b);
+% title('frame difference');
+obj_b=rgb2gray(obj_b);  
+% figure,imshow(obj_b);
+%    obj_b=imadjust(obj_b);
+%   figure,imshow(obj_b);
+obj_b = medfilt2(obj_b,[3 3]);
+% obj_b = medfilt2(obj_b,[2 2]);
+% figure,imshow(obj_b);
+%level = graythresh(obj_b);
+level=.18;
+obj_b=im2bw(obj_b,level);
+obj_b = medfilt2(obj_b,[2 2]);
+% figure,imshow(obj_b);
+ obj_b = bwareaopen(obj_b, 400); 
+% obj_b = medfilt2(obj_b,[2 2]);
+%  figure,imshow(obj_b);
+% se = strel('disk',2);
+% obj_b = imclose(obj_b,se);
+ obj_b = imfill(obj_b,'holes');
+% figure,imshow(obj_b);
+%   obj_b = bwareaopen(obj_b, 50); 
+%       figure,imshow(obj_b);
+labeledImage = bwconncomp(obj_b,8);
+data = regionprops(labeledImage,'basic');
+
+      bb = data.BoundingBox;
+      ba = data.Area;
+       if ba>.91*mu_d
+             uu=obj_b;
+                        
+             B = medfilt2(uu);
+             
+              rectangle('Position',bb,'EdgeColor','r','LineWidth',2)
+%       hold on;
+
+%       plot(bco(1),bco(2),'-m+')
+    final = imcrop(uu,[(bb(1)) (bb(2)) bb(3) bb(4)]);
+%     hold on;
+%       plot(bco(1),bco(2),'-m+')
+% figure,imshow(final);
+     final = imresize(final, [50 50]);
+% figure,imshow(final);
+% figure,imshow(B);
+     outputBaseFileName = sprintf('xxxFrame %4.4d.jpg', ii);
+     outputFullFileName = fullfile(outputFolder,outputBaseFileName);
+     
+     if ~( mod(ii,1) )
+      
+         imwrite(final,outputFullFileName, 'jpg');
+     end
+     
+       bg_bw = fr_bw;
+       end
+         ii=ii+1;
+ end
+
+    
+f2 = outputFolder;
+file = dir(f2);
+% F = length(file);
+NF = length(file);
+images = cell(NF,1);
+z=zeros(180,NF-2);
+theta = 0:179;
+z1=zeros(NF-2,180);
+for k = 3 : NF
+images{k} = imread(fullfile(f2, file(k).name));
+%[temp1, temp2] = radon(images{k,1},theta);
+temp111=images{k,1};
+%figure,imshow(temp111)
+temp1111=im2bw(temp111);
+[temp1,temp2] = radon(temp1111,theta);
+
+figure(), imagesc(theta, temp2, temp1); colormap(hot);
+xlabel('\theta (degrees)'); ylabel('x\prime');
+title('R_{\theta} (x\prime)');
+colorbar
+     %pause(2)
+     % R TRANSFORM
+%      R=fix(R);
+%      Rt1 = sum(R.^2, 1);
+%      
+%      figure; plot(theta, Rt1);
+     temp5=temp1.^2;
+     [i, j]=size(temp5);
+     
+     Rnorm=zeros(1,j);
+     for l=1:j
+         sum1=0;
+         sum2=0;
+         for m=1:i
+             sum2=temp5(m,l);
+             sum1=sum1+sum2;
+         Rnorm(1 ,l)=sum1;    
+         end
+%          Rnorm(1 ,l)=sum1;
+             end
+         RR=Rnorm; 
+  
+    
+     Rnorm2= RR./max (RR);
+     figure; plot(theta, Rnorm2); 
+    z1(k-2,:)=Rnorm2;
+  
+   
+%  R(k-2,:) = zz; 
+thetaa(k-2,:)=theta;
+z(k-2,:)=k-2;
+end
+Z=z';
+% Z1 is the matrix of RADON TRANSFORM , thetaa angle variation from 0 to
+% 180degree 
+th=thetaa((1:7),:);
+ mesh(z1,th);figure(gcf);
+xlabel('Theta (degree)');
+zlabel('Normalized Radon Transform');
+ylabel('Frame No.');
+% 	no_dims = round(intrinsic_dim(R, 'PackingNumbers'));
+
+%[mappedX, mapping] = compute_mapping(z1, 'PCA');	
+%[mappedX, mapping] = compute_mapping(z1, 'Laplacian',1,12);
+%final=mappedX;
+[mappedX, mapping] = compute_mapping(z1, 'KPCA',1,'gauss');
+final=mappedX;
+% plot(mappedX(:,1),'ro');
+%     hold on;
+%     plot(mappedX(:,2),'gs');
+%     
+%     hold off;
+% title('Result of PCA');
+% bb=mappedX;
+% %no_dims = round(intrinsic_dim(bb, 'EigValue'));
+% [mappedX1, mapping1] = compute_mapping(bb, 'LDA', 1);
+% finalvalue=mappedX1;
+
+[text]=xlswrite('radon.xls',[{'person01_handclapping_d4'}],1,'A1:A1');
+a=xlswrite('radon.xls',final,1,'B1');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,228 @@
+readerobj = VideoReader('daria_bend.avi', 'tag', 'myreader1');
+vidFrames = read(readerobj);
+numFrames = get(readerobj, 'numberOfFrames');
+
+%numFrames=45;
+% if (numFrames<45)
+%     numFrames=numFrames;
+% else numFrames=45;
+% end
+%for k=1:numFrames-1
+ %Computation of ami
+ bg=imread('41.jpg');
+ bg=rgb2gray(bg);
+     m=0;
+    for k=1:2:70;
+         mov(k).cdata = vidFrames(:,:,:,k);
+mov(k+1).cdata = vidFrames(:,:,:,k+1);
+        g1=rgb2gray(mov(k).cdata );
+       
+        g2=rgb2gray(mov(k+1).cdata);
+        g=bg-g1;
+ 
+%figure,imshow(obj_b);
+% title('frame difference');
+obj_b=g; 
+%figure,imshow(obj_b);
+
+%  obj_b=imadjust(obj_b);
+%  figure,imshow(obj_b);
+obj_b = medfilt2(obj_b,[2 2]);
+%figure,imshow(obj_b);
+%level = graythresh(obj_b);
+level=.2;
+obj_b=im2bw(obj_b,level);
+obj_b = medfilt2(obj_b,[2 2]);
+%figure,imshow(obj_b);
+obj_b = imfill(obj_b,'holes');
+
+        m=m+obj_b;
+       
+    end
+    m;
+    ami=m/35;
+    %figure(1),imshow(ami, []);% mhi image 
+    % MEI image binary image 
+%     ami2=m/numFrames;
+%    figure(2),imshow(ami2, []);
+%    ami2=im2bw(ami);
+   
+%    K = filter2(fspecial('average',3),ami)/4;
+   %figure(2),imshow(ami2);
+     ami2=bwareaopen(ami,15);
+     %figure(2),imshow(ami2);
+   ami2 = medfilt2(ami2,[3 3]);
+   figure(3),imshow(ami2)
+   
+   %se = strel('disk',1);
+   se = strel('line',3,90);
+   d1=imerode(ami2,se);
+   %figure(3),imshow(d1)
+   d2 = imfill(d1, 'holes');
+   %figure,imshow(d2)
+   %% Extraaction of ROI
+%      obj_b=im2bw(obj_b,level);
+       obj_b = bwareaopen(d2, 800); 
+       figure(3),imshow(obj_b)
+       %labeledImage = bwconncomp(obj_b,8);
+       
+      measurements = regionprops(obj_b,'BoundingBox','Centroid');
+     
+      %data = regionprops(cc, 'basic');
+      bb = measurements.BoundingBox;
+      %bco = measurements.Centroid;
+%       figure(1),subplot(4,4,1),imshow(obj_b) ;
+     % figure,imshow(obj_b) ;
+    
+      rectangle('Position',bb,'EdgeColor','r','LineWidth',2)
+%       hold on;
+%       plot(bco(1),bco(2),'-m+')
+      subImage = imcrop(obj_b,[bb(1) bb(2) bb(3) bb(4)]);
+      figure(4),subplot(4,4,2),imshow(subImage);
+      
+   
+   %c=regionprops(b,'all')
+ CENTROID = regionprops(subImage,'centroid');
+ AREA=regionprops(subImage,'area');
+
+   %% ENERGY Projection of Pixels in X & Y Direction
+   
+   [height,width]=size(subImage);
+   sum=zeros(height,1);
+   ev=zeros(height,1);
+   for p=1:height-1
+       
+       maxemi=max(subImage(p,:));
+       
+       for k=1:width-1
+           sum(p,1)=sum(p,1)+subImage(p,k);
+%            if (maxemi<ami(p,k))
+%                maxemi=ami(p,k);
+           
+       end
+           
+               ev(p,1)=sum(p,1)/maxemi;
+               
+               
+      
+           p=p+1;
+               
+   end
+   ev1=ev/max(ev);
+   figure(5),plot(ev1,'--rs','LineWidth',1,...
+                'MarkerEdgeColor','k',...
+                'MarkerFaceColor','g',...
+                'MarkerSize',2)
+   ylabel ('normalized value' )
+   xlabel ('image height in y direction ')       
+   sum1=zeros(1,width);
+   eh=zeros(1,width);
+   [height,width]=size(subImage);
+   for p1=1:width-1
+       
+       maxemi=max(subImage(:,p1));
+       
+       for k1=1:height-1
+           sum1(1,p1)=sum1(1,p1)+subImage(k1,p1);
+%            if (maxemi<ami(p,k))
+%                maxemi=ami(p,k);
+           
+       end
+           
+               eh(1,p1)=sum1(1,p1)/maxemi;
+               
+               
+      
+           p1=p1+1;
+               
+   end
+   eh1=eh/max(eh);
+   
+   figure(6),plot(eh1,'--rs','LineWidth',1,...
+                'MarkerEdgeColor','g',...
+                'MarkerFaceColor','k',...
+                'MarkerSize',2)
+   ylabel ('normalized value' )
+   xlabel ('image width in x direction ')  
+   %% MEAN VALUES COMPUATIONS horizontal ENERGY HISTOGRAM
+MEANEH=mean(eh1);
+VARIANEH=var(eh1);
+%% MEAN VALUES COMPUTAIONS vertical      ENERGY HISTOGRAM
+MEANEV=mean(ev1);
+VARIANEV=var(ev1);
+%%  DISCRETE FOURIER TRANSFORM % Magnitude and phase
+dftEH = fft(eh1);        % Compute DFT of x
+m = abs(dftEH);
+m=m./max(m);
+figure(7),plot(m,'--bs')
+ylabel ('normalized DFT value' )
+xlabel ('image width in x direction ')
+% p = unwrap(angle(dftEH)); 
+MEANDFTEH=mean(dftEH);
+dftEV= fft(ev1);
+m1 = abs(dftEV);
+m1=m1./max(m1);
+figure(8),plot(m1,'--bs')
+ylabel ('normalized DFT value' )
+xlabel ('image height in y direction ')
+% p = unwrap(angle(dftEV));
+MEANDFTEV=mean(dftEV);
+
+FEATURES=[{AREA} CENTROID];
+AREA1=FEATURES{1,1}.Area;
+% CENTROID1=FEATURES{1,2}.Centroid;
+% %%
+% ELEMENT=[AREA1 CENTROID1 MEANEH MEANEV MEANDFTEH MEANDFTEV];
+%% EXTRACTION PHOG DESCRIPTOR 
+
+I=subImage;
+%I=imread('11.jpg'); % tmp is an indexed image file using 
+%I=rgb2gray(I);
+[h, w]=size(I);
+%I=imread('Frame 0011.png'); % tmp is an indexed image file using 
+%figure(1),imshow(I)
+%xCropped = tmp(33:110, 48:140);
+%I= imcrop(I,[34 32 80 100]);
+% tmp1=imcrop(tmp);
+%figure(2); imshow(I)
+%figure(1),imshow(I)
+%In our case we have set N=8 and L=3. Hence our PHoG descriptor is of
+%length 8(4^0+4^1+4^2 ) = 680. 
+
+bin = 8;
+angle = 360;
+L=2;
+roi = [1;h;1;w];% x 1=300; y=1:225% 1:144 ,1:180
+p = anna_phog(I,bin,angle,L,roi);
+% MEAN=mean(p);
+% VARI=fft(p);
+% mean1=mean(VARI);
+% data=[MEAN mean1]
+% 
+% [text]=xlswrite('pp.xls',[{'a'}],1,'A1:A1');
+% a=xlswrite('pp1.xls',data,1,'B1:C1');
+figure(9),bar(p);figure(gcf);
+%% Array of values 
+P=p';
+ELEMENT=[AREA1  MEANEH MEANEV MEANDFTEH MEANDFTEV P];
+final=ELEMENT';
+[text]=xlswrite('AEI.xls',[{'shahar_bend'}],1,'A1371:A1371');
+a=xlswrite('AEI.xls',final,1,'B1371');
+
+  
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
